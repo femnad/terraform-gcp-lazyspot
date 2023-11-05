@@ -29,7 +29,7 @@ Requires [google-beta](https://registry.terraform.io/providers/hashicorp/google-
 ### Minimal
 
 ```
-provider "google" {
+provider "google-beta" {
   project = <project>
   zone    = <zone>
 }
@@ -38,10 +38,10 @@ module "instance" {
   source  = "femnad/lazyspot/gcp"
   version = "0.1.0"
 
-  github_user     = "femnad"
+  github_user = "femnad"
 
   providers = {
-    google = google
+    google-beta = google-beta
   }
 }
 ```

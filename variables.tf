@@ -14,7 +14,7 @@ variable "github_user" {
 
 variable "image" {
   type        = string
-  default     = "fedora-cloud/fedora-cloud-40"
+  default     = "ubuntu-os-cloud/ubuntu-2404-lts-amd64"
   description = "Image of the instance"
 }
 

@@ -77,9 +77,4 @@ No modules.
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_id"></a> [id](#output\_id) | n/a |
-| <a name="output_instance_ip_addr"></a> [instance\_ip\_addr](#output\_instance\_ip\_addr) | n/a |
-| <a name="output_name"></a> [name](#output\_name) | n/a |
-| <a name="output_network_name"></a> [network\_name](#output\_network\_name) | n/a |
+No outputs.

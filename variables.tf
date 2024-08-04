@@ -86,7 +86,7 @@ variable "name" {
 
 variable "network_tier" {
   type        = string
-  default     = "STANDARD"
+  default     = "PREMIUM"
   description = "Network tier for the instance"
 }
 

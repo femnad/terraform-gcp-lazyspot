@@ -7,20 +7,21 @@ variable "attached_disks" {
   description = "List of disks to attach"
 }
 
-variable "dns_name" {
-  type        = string
-  description = "DNS name to associate with the instance"
-}
-
-variable "dns_ttl" {
+variable "disk_size" {
   type        = number
-  default     = 600
-  description = "TTL for the DNS record"
+  default     = 10
+  description = "Disk size in GiB"
 }
 
-variable "dns_zone" {
-  type        = string
-  description = "Name fo the DNS managed zone"
+variable "dns_spec" {
+  type = object({
+    name = string
+    ttl  = optional(number)
+    type = optional(string)
+    zone = string
+  })
+  description = "DNS properties for the record to associate with the instance"
+  default     = null
 }
 
 variable "github_user" {
@@ -106,12 +107,6 @@ variable "service_account_scopes" {
   type        = list(string)
   default     = ["cloud-platform"]
   description = "List of service account scopes"
-}
-
-variable "size" {
-  type        = number
-  default     = 10
-  description = "Image size in GiB"
 }
 
 variable "ssh_user" {

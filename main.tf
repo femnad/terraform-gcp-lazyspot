@@ -11,7 +11,11 @@ locals {
       ip = cidrhost(local.ip_prefix, host)
     }...
   }
-  name            = var.name == null ? random_pet.this[0].id : var.name
+
+  default_ttl  = 600
+  default_type = "A"
+  name         = var.name == null ? random_pet.this[0].id : var.name
+
   ssh_user        = coalesce(var.ssh_user, var.github_user)
   ssh_format_spec = format("%s:%%s %s@host", local.ssh_user, local.ssh_user)
   ssh_keys_metadata = join("\n", formatlist(local.ssh_format_spec, [
@@ -39,19 +43,15 @@ resource "random_pet" "this" {
   count = var.name == null ? 1 : 0
 }
 
-resource "google_compute_network" "network" {
+resource "google_compute_network" "this" {
   name                    = local.name
   auto_create_subnetworks = false
-
-  provider = google-beta
 }
 
-resource "google_compute_subnetwork" "subnetwork" {
+resource "google_compute_subnetwork" "this" {
   name          = local.name
-  network       = google_compute_network.network.name
+  network       = google_compute_network.this.name
   ip_cidr_range = "10.1.0.0/24"
-
-  provider = google-beta
 }
 
 resource "google_compute_instance" "instance" {
@@ -62,7 +62,7 @@ resource "google_compute_instance" "instance" {
   metadata = merge(local.ssh_keys_metadata_map, var.metadata)
 
   network_interface {
-    subnetwork = google_compute_subnetwork.subnetwork.name
+    subnetwork = google_compute_subnetwork.this.name
     access_config {
       network_tier = var.network_tier
     }
@@ -71,7 +71,7 @@ resource "google_compute_instance" "instance" {
   boot_disk {
     initialize_params {
       image = data.google_compute_image.this.id
-      size  = var.size
+      size  = var.disk_size
     }
   }
 
@@ -105,13 +105,11 @@ resource "google_compute_instance" "instance" {
       device_name = attached_disk.value.name
     }
   }
-
-  provider = google-beta
 }
 
-resource "google_compute_firewall" "self-reachable" {
-  name    = "${local.name}-self-reachable"
-  network = google_compute_network.network.name
+resource "google_compute_firewall" "self" {
+  name    = "${local.name}-self"
+  network = google_compute_network.this.name
   count   = var.self_reachable_ports != null ? 1 : 0
 
   dynamic "allow" {
@@ -124,13 +122,11 @@ resource "google_compute_firewall" "self-reachable" {
   }
 
   source_ranges = [for ip in local.ips.range : ip.ip]
-
-  provider = google-beta
 }
 
-resource "google_compute_firewall" "world-reachable" {
-  name    = "${local.name}-world-reachable"
-  network = google_compute_network.network.name
+resource "google_compute_firewall" "world" {
+  name    = "${local.name}-world"
+  network = google_compute_network.this.name
   count   = var.world_reachable_spec != null ? 1 : 0
 
   dynamic "allow" {
@@ -143,17 +139,15 @@ resource "google_compute_firewall" "world-reachable" {
   }
 
   source_ranges = var.world_reachable_spec.remote_ips == null ? ["0.0.0.0/0"] : var.world_reachable_spec.remote_ips
-
-  provider = google-beta
 }
 
 resource "google_dns_record_set" "this" {
-  count = coalesce(var.dns_name, var.dns_zone) == null ? 0 : 1
-  name  = var.dns_name
-  type  = "A"
-  ttl   = var.dns_ttl
+  count = var.dns_spec != null ? 1 : 0
+  name  = var.dns_spec.name
+  type  = coalesce(var.dns_spec.type, local.default_type)
+  ttl   = coalesce(var.dns_spec.ttl, local.default_ttl)
 
-  managed_zone = var.dns_zone
+  managed_zone = var.dns_spec.zone
 
   rrdatas = flatten(
     [
@@ -163,6 +157,4 @@ resource "google_dns_record_set" "this" {
         cfg.nat_ip
       ]
   ])
-
-  provider = google-beta
 }

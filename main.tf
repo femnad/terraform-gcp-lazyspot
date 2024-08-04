@@ -1,20 +1,30 @@
 locals {
+  # Firewall spec defaults.
+  default_ip_mask = 32
+  default_ip_num  = 1
+
+  ip_mask = var.firewall != null ? coalesce(var.firewall.ip_mask, local.default_ip_mask) : local.default_ip_mask
+  ip_num  = var.firewall != null ? coalesce(var.firewall.ip_num, local.default_ip_num) : local.default_ip_num
+
   default_self_allow = {
     ""   = "icmp"
     "22" = "tcp"
   }
   public_ip = jsondecode(data.http.ipinfo.response_body).ip
-  ip_prefix = format("%s/%s", local.public_ip, var.ip_mask)
+  ip_prefix = format("%s/%s", local.public_ip, local.ip_mask)
   ips = {
-    for host in range(var.ip_num) :
+    for host in range(local.ip_num) :
     "range" => {
       ip = cidrhost(local.ip_prefix, host)
     }...
   }
 
+  # DNS spec defaults.
   default_ttl  = 600
   default_type = "A"
-  name         = var.name == null ? random_pet.this[0].id : var.name
+
+  # Instance, network, subnetwork and firewall name.
+  name = var.name == null ? random_pet.this[0].id : var.name
 
   ssh_user        = coalesce(var.ssh_user, var.github_user)
   ssh_format_spec = format("%s:%%s %s@host", local.ssh_user, local.ssh_user)
@@ -27,8 +37,8 @@ locals {
 }
 
 data "google_compute_image" "this" {
-  family  = var.image_family
-  project = var.image_project
+  family  = var.image.family
+  project = var.image.project
 }
 
 data "http" "github" {
@@ -99,7 +109,7 @@ resource "google_compute_instance" "instance" {
   }
 
   dynamic "attached_disk" {
-    for_each = var.attached_disks
+    for_each = var.disks
     content {
       source      = attached_disk.value.source
       device_name = attached_disk.value.name
@@ -110,10 +120,10 @@ resource "google_compute_instance" "instance" {
 resource "google_compute_firewall" "self" {
   name    = "${local.name}-self"
   network = google_compute_network.this.name
-  count   = var.self_reachable_ports != null ? 1 : 0
+  count   = var.self_reachable != null ? 1 : 0
 
   dynamic "allow" {
-    for_each = length(var.self_reachable_ports) > 0 ? var.self_reachable_ports : local.default_self_allow
+    for_each = length(var.self_reachable) > 0 ? var.self_reachable : local.default_self_allow
 
     content {
       protocol = allow.value
@@ -127,10 +137,10 @@ resource "google_compute_firewall" "self" {
 resource "google_compute_firewall" "world" {
   name    = "${local.name}-world"
   network = google_compute_network.this.name
-  count   = var.world_reachable_spec != null ? 1 : 0
+  count   = var.world_reachable != null ? 1 : 0
 
   dynamic "allow" {
-    for_each = var.world_reachable_spec.port_map
+    for_each = var.world_reachable.port_map
 
     content {
       protocol = allow.value
@@ -138,16 +148,16 @@ resource "google_compute_firewall" "world" {
     }
   }
 
-  source_ranges = var.world_reachable_spec.remote_ips == null ? ["0.0.0.0/0"] : var.world_reachable_spec.remote_ips
+  source_ranges = var.world_reachable.remote_ips == null ? ["0.0.0.0/0"] : var.world_reachable.remote_ips
 }
 
 resource "google_dns_record_set" "this" {
-  count = var.dns_spec != null ? 1 : 0
-  name  = var.dns_spec.name
-  type  = coalesce(var.dns_spec.type, local.default_type)
-  ttl   = coalesce(var.dns_spec.ttl, local.default_ttl)
+  count = var.dns != null ? 1 : 0
+  name  = var.dns.name
+  type  = coalesce(var.dns.type, local.default_type)
+  ttl   = coalesce(var.dns.ttl, local.default_ttl)
 
-  managed_zone = var.dns_spec.zone
+  managed_zone = var.dns.zone
 
   rrdatas = flatten(
     [

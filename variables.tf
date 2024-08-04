@@ -1,4 +1,10 @@
-variable "attached_disks" {
+variable "disk_size" {
+  type        = number
+  default     = 10
+  description = "Root disk size in GiB"
+}
+
+variable "disks" {
   type = list(object({
     source = string,
     name   = string,
@@ -7,13 +13,7 @@ variable "attached_disks" {
   description = "List of disks to attach"
 }
 
-variable "disk_size" {
-  type        = number
-  default     = 10
-  description = "Disk size in GiB"
-}
-
-variable "dns_spec" {
+variable "dns" {
   type = object({
     name = string
     ttl  = optional(number)
@@ -29,6 +29,15 @@ variable "github_user" {
   description = "A GitHub user to lookup allowed SSH keys"
 }
 
+variable "firewall" {
+  type = object({
+    ip_mask = optional(number)
+    ip_num  = optional(number)
+  })
+  description = "Firewall specification"
+  default     = null
+}
+
 variable "image" {
   type = object({
     project = string
@@ -39,26 +48,6 @@ variable "image" {
     family  = "ubuntu-2404-lts-amd64"
   }
   description = "Image specification"
-}
-
-variable "image_project" {
-  type        = string
-  default     = "ubuntu-os-cloud"
-  description = "Image project"
-}
-
-variable "image_family" {
-  type        = string
-  default     = "ubuntu-2404-lts-amd64"
-  description = "Image family"
-}
-
-variable "ip_mask" {
-  default = 32
-}
-
-variable "ip_num" {
-  default = 1
 }
 
 variable "machine_type" {
@@ -91,7 +80,7 @@ variable "network_tier" {
   description = "Network tier for the instance"
 }
 
-variable "self_reachable_ports" {
+variable "self_reachable" {
   type        = map(string)
   default     = {}
   description = "Map of protocol to comma separated ports, reachable from current IP"
@@ -115,7 +104,7 @@ variable "ssh_user" {
   description = "A user name to set for authorized SSH keys, defaults to `github_user`"
 }
 
-variable "world_reachable_spec" {
+variable "world_reachable" {
   type = object({
     remote_ips = optional(list(string))
     port_map   = map(string)

@@ -9,7 +9,7 @@ A Terraform module for lazy GCP spot instances.
 ```terraform
 module "instance" {
   source  = "femnad/lazyspot/gcp"
-  version = "0.2.0"
+  version = "0.3.0"
 
   github_user = "femnad"
 }

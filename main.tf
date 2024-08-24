@@ -131,7 +131,7 @@ resource "google_compute_firewall" "self" {
 }
 
 resource "google_compute_firewall" "other" {
-  for_each = var.firewall.other
+  for_each = coalesce(var.firewall.other, {})
   name     = "${local.name}-${replace(each.key, "/[./]/", "-")}"
   network  = google_compute_network.this.name
 

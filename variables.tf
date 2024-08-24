@@ -31,11 +31,24 @@ variable "github_user" {
 
 variable "firewall" {
   type = object({
-    ip_mask = optional(number)
-    ip_num  = optional(number)
+    other = map(map(list(string)))
+    self = object({
+      allow   = optional(map(list(string)))
+      ip_mask = optional(number)
+      ip_num  = optional(number)
+    })
   })
+
   description = "Firewall specification"
-  default     = null
+  default = {
+    other = {}
+    self = {
+      allow = {
+        icmp = [""] # Make Goland happy.
+        tcp  = ["22"]
+      }
+    }
+  }
 }
 
 variable "image" {
@@ -80,12 +93,6 @@ variable "network_tier" {
   description = "Network tier for the instance"
 }
 
-variable "self_reachable" {
-  type        = map(string)
-  default     = {}
-  description = "Map of protocol to comma separated ports, reachable from current IP"
-}
-
 variable "service_account" {
   type        = string
   default     = null
@@ -102,12 +109,4 @@ variable "ssh_user" {
   type        = string
   default     = ""
   description = "A user name to set for authorized SSH keys, defaults to `github_user`"
-}
-
-variable "world_reachable" {
-  type = object({
-    remote_ips = optional(list(string))
-    port_map   = map(string)
-  })
-  default = null
 }

@@ -3,16 +3,12 @@ locals {
   default_ip_mask = 32
   default_ip_num  = 1
 
-  ip_mask = var.firewall != null ? coalesce(var.firewall.ip_mask, local.default_ip_mask) : local.default_ip_mask
-  ip_num  = var.firewall != null ? coalesce(var.firewall.ip_num, local.default_ip_num) : local.default_ip_num
+  ip_mask = var.firewall.self != null ? coalesce(var.firewall.self.ip_mask, local.default_ip_mask) : local.default_ip_mask
+  ip_num  = var.firewall.self != null ? coalesce(var.firewall.self.ip_num, local.default_ip_num) : local.default_ip_num
 
-  default_self_allow = {
-    ""   = "icmp"
-    "22" = "tcp"
-  }
   public_ip = jsondecode(data.http.ipinfo.response_body).ip
   ip_prefix = format("%s/%s", local.public_ip, local.ip_mask)
-  ips = {
+  self_ips = {
     for host in range(local.ip_num) :
     "range" => {
       ip = cidrhost(local.ip_prefix, host)
@@ -120,35 +116,35 @@ resource "google_compute_instance" "instance" {
 resource "google_compute_firewall" "self" {
   name    = "${local.name}-self"
   network = google_compute_network.this.name
-  count   = var.self_reachable != null ? 1 : 0
+  count   = var.firewall.self != null ? 1 : 0
 
   dynamic "allow" {
-    for_each = length(var.self_reachable) > 0 ? var.self_reachable : local.default_self_allow
+    for_each = var.firewall.self.allow
 
     content {
-      protocol = allow.value
-      ports    = allow.value == "icmp" ? null : split(",", allow.key)
+      protocol = allow.key
+      ports    = allow.key == "icmp" ? null : allow.value
     }
   }
 
-  source_ranges = [for ip in local.ips.range : ip.ip]
+  source_ranges = [for ip in local.self_ips.range : ip.ip]
 }
 
-resource "google_compute_firewall" "world" {
-  name    = "${local.name}-world"
-  network = google_compute_network.this.name
-  count   = var.world_reachable != null ? 1 : 0
+resource "google_compute_firewall" "other" {
+  for_each = var.firewall.other
+  name     = "${local.name}-${replace(each.key, "/[./]/", "-")}"
+  network  = google_compute_network.this.name
 
   dynamic "allow" {
-    for_each = var.world_reachable.port_map
+    for_each = each.value
 
     content {
-      protocol = allow.value
-      ports    = allow.value == "icmp" ? null : split(",", allow.key)
+      protocol = allow.key
+      ports    = allow.key == "icmp" ? [] : allow.value
     }
   }
 
-  source_ranges = var.world_reachable.remote_ips == null ? ["0.0.0.0/0"] : var.world_reachable.remote_ips
+  source_ranges = [each.key]
 }
 
 resource "google_dns_record_set" "this" {

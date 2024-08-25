@@ -13,7 +13,7 @@ provider "google" {
 
 module "instance" {
   source  = "femnad/lazyspot/gcp"
-  version = "0.5.0"
+  version = "0.6.0"
 
   github_user = "femnad"
 
@@ -68,7 +68,7 @@ No modules.
 | <a name="input_disk_size"></a> [disk\_size](#input\_disk\_size) | Root disk size in GiB | `number` | `10` | no |
 | <a name="input_disks"></a> [disks](#input\_disks) | List of disks to attach | <pre>list(object({<br>    source = string,<br>    name   = string,<br>  }))</pre> | `[]` | no |
 | <a name="input_dns"></a> [dns](#input\_dns) | DNS properties for the record to associate with the instance | <pre>object({<br>    name = string<br>    ttl  = optional(number)<br>    type = optional(string)<br>    zone = string<br>  })</pre> | `null` | no |
-| <a name="input_firewall"></a> [firewall](#input\_firewall) | Firewall specification | <pre>object({<br>    other = map(map(list(string)))<br>    self = object({<br>      allow   = optional(map(list(string)))<br>      ip_mask = optional(number)<br>      ip_num  = optional(number)<br>    })<br>  })</pre> | <pre>{<br>  "other": {},<br>  "self": {<br>    "allow": {<br>      "icmp": [<br>        ""<br>      ],<br>      "tcp": [<br>        "22"<br>      ]<br>    }<br>  }<br>}</pre> | no |
+| <a name="input_firewall"></a> [firewall](#input\_firewall) | Firewall specification | <pre>object({<br>    other = optional(map(map(list(string))))<br>    self = optional(object({<br>      allow   = optional(map(list(string)))<br>      ip_mask = optional(number)<br>      ip_num  = optional(number)<br>      }), {<br>      allow = {<br>        icmp = []<br>        tcp  = ["22"]<br>      }<br>      }<br>    )<br>  })</pre> | <pre>{<br>  "other": {}<br>}</pre> | no |
 | <a name="input_github_user"></a> [github\_user](#input\_github\_user) | A GitHub user to lookup allowed SSH keys | `string` | n/a | yes |
 | <a name="input_image"></a> [image](#input\_image) | Image specification | <pre>object({<br>    project = string<br>    family  = string<br>  })</pre> | <pre>{<br>  "family": "ubuntu-2404-lts-amd64",<br>  "project": "ubuntu-os-cloud"<br>}</pre> | no |
 | <a name="input_machine_type"></a> [machine\_type](#input\_machine\_type) | Instance type | `string` | `"e2-micro"` | no |

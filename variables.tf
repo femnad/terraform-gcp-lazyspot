@@ -37,23 +37,22 @@ variable "github_user" {
 
 variable "firewall" {
   type = object({
-    other = map(map(list(string)))
-    self = object({
+    other = optional(map(map(list(string))))
+    self = optional(object({
       allow   = optional(map(list(string)))
       ip_mask = optional(number)
       ip_num  = optional(number)
-    })
+      }), {
+      allow = {
+        icmp = []
+        tcp  = ["22"]
+      }
+      }
+    )
   })
-
   description = "Firewall specification"
   default = {
     other = {}
-    self = {
-      allow = {
-        icmp = [""] # Make Goland happy.
-        tcp  = ["22"]
-      }
-    }
   }
 }
 

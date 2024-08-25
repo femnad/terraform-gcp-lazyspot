@@ -7,11 +7,19 @@ A Terraform module for lazy GCP spot instances.
 ### Minimal
 
 ```terraform
+provider "google" {
+    # Google provider configuration here.
+}
+
 module "instance" {
   source  = "femnad/lazyspot/gcp"
-  version = "0.4.0"
+  version = "0.5.0"
 
   github_user = "femnad"
+
+  provider {
+    google = google
+  }
 }
 ```
 
@@ -43,7 +51,7 @@ No modules.
 |------|------|
 | [google_compute_firewall.other](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
 | [google_compute_firewall.self](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
-| [google_compute_instance.instance](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance) | resource |
+| [google_compute_instance.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance) | resource |
 | [google_compute_network.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network) | resource |
 | [google_compute_subnetwork.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_dns_record_set.this](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
@@ -67,8 +75,7 @@ No modules.
 | <a name="input_metadata"></a> [metadata](#input\_metadata) | A map of metadata values | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the instance | `string` | `null` | no |
 | <a name="input_network_tier"></a> [network\_tier](#input\_network\_tier) | Network tier for the instance | `string` | `"PREMIUM"` | no |
-| <a name="input_service_account"></a> [service\_account](#input\_service\_account) | Optional service account to associate with the instance | `string` | `null` | no |
-| <a name="input_service_account_scopes"></a> [service\_account\_scopes](#input\_service\_account\_scopes) | List of service account scopes | `list(string)` | <pre>[<br>  "cloud-platform"<br>]</pre> | no |
+| <a name="input_service_account"></a> [service\_account](#input\_service\_account) | Optional service account to associate with the instance | <pre>object({<br>    name   = string<br>    scopes = optional(list(string), ["cloud-platform"])<br>  })</pre> | `null` | no |
 | <a name="input_ssh_user"></a> [ssh\_user](#input\_ssh\_user) | A user name to set for authorized SSH keys, defaults to `github_user` | `string` | `""` | no |
 
 ## Outputs

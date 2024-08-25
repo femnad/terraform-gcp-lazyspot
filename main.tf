@@ -60,7 +60,7 @@ resource "google_compute_subnetwork" "this" {
   ip_cidr_range = "10.1.0.0/24"
 }
 
-resource "google_compute_instance" "instance" {
+resource "google_compute_instance" "this" {
   name                      = local.name
   machine_type              = var.machine_type
   allow_stopping_for_update = true

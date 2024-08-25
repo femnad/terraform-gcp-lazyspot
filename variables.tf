@@ -51,9 +51,7 @@ variable "firewall" {
     )
   })
   description = "Firewall specification"
-  default = {
-    other = {}
-  }
+  default     = {}
 }
 
 variable "image" {

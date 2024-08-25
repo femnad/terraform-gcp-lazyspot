@@ -141,7 +141,7 @@ resource "google_compute_firewall" "self" {
 
     content {
       protocol = allow.key
-      ports    = allow.key == "icmp" ? null : allow.value
+      ports    = allow.key == "icmp" ? [] : allow.value
     }
   }
 
@@ -158,7 +158,7 @@ resource "google_compute_firewall" "other" {
 
     content {
       protocol = allow.key
-      ports    = allow.key == "icmp" ? null : allow.value
+      ports    = allow.key == "icmp" ? [] : allow.value
     }
   }
 

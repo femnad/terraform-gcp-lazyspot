@@ -36,10 +36,14 @@ variable "github_user" {
 }
 
 variable "firewall" {
+  # Default value duplicated to allow setting `ip_mask` and `ip_name` without specifying `allow`.
   type = object({
     other = optional(map(map(list(string))), {})
     self = optional(object({
-      allow   = optional(map(list(string)))
+      allow = optional(map(list(string)), {
+        icmp = []
+        tcp  = ["22"]
+      })
       ip_mask = optional(number)
       ip_num  = optional(number)
       }), {

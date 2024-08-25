@@ -43,7 +43,7 @@ locals {
     for subnet in var.subnets :
     coalesce(subnet.name, subnet.cidr) => {
       cidr = subnet.cidr
-      name = format("${local.name}-", replace(subnet.cidr, "/[./]/", "-"))
+      name = format("${local.name}-%s", replace(subnet.cidr, "/[./]/", "-"))
       tier = subnet.tier
     }
   }

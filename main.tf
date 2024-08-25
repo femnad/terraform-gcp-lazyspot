@@ -3,8 +3,14 @@ locals {
   default_ip_mask = 32
   default_ip_num  = 1
 
-  ip_mask = var.firewall.self != null ? coalesce(var.firewall.self.ip_mask, local.default_ip_mask) : local.default_ip_mask
-  ip_num  = var.firewall.self != null ? coalesce(var.firewall.self.ip_num, local.default_ip_num) : local.default_ip_num
+  firewall = coalesce(var.firewall, { self = {
+    allow   = {}
+    ip_mask = null
+    ip_num  = null
+  }, other = {} })
+
+  ip_mask = coalesce(local.firewall.self.ip_mask, local.default_ip_mask)
+  ip_num  = coalesce(local.firewall.self.ip_num, local.default_ip_num)
 
   public_ip = jsondecode(data.http.ipinfo.response_body).ip
   ip_prefix = format("%s/%s", local.public_ip, local.ip_mask)
@@ -134,10 +140,10 @@ resource "google_compute_instance" "this" {
 resource "google_compute_firewall" "self" {
   name    = "${local.name}-self"
   network = local.network_name
-  count   = var.firewall.self != null ? 1 : 0
+  count   = length(coalesce(local.firewall.self.allow, {})) > 0 ? 1 : 0
 
   dynamic "allow" {
-    for_each = var.firewall.self.allow
+    for_each = local.firewall.self.allow
 
     content {
       protocol = allow.key
@@ -149,7 +155,7 @@ resource "google_compute_firewall" "self" {
 }
 
 resource "google_compute_firewall" "other" {
-  for_each = coalesce(var.firewall.other, {})
+  for_each = local.firewall.other
   name     = "${local.name}-${replace(each.key, "/[./]/", "-")}"
   network  = local.network_name
 

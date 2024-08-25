@@ -37,7 +37,7 @@ variable "github_user" {
 
 variable "firewall" {
   type = object({
-    other = optional(map(map(list(string))))
+    other = optional(map(map(list(string))), {})
     self = optional(object({
       allow   = optional(map(list(string)))
       ip_mask = optional(number)
@@ -50,7 +50,7 @@ variable "firewall" {
       }
     )
   })
-  description = "Firewall specification"
+  description = "Firewall specification, passing null will prevent adding default rules"
   default     = {}
 }
 

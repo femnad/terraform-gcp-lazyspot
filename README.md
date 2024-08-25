@@ -13,13 +13,9 @@ provider "google" {
 
 module "instance" {
   source  = "femnad/lazyspot/gcp"
-  version = "0.6.3"
+  version = "0.6.5"
 
   github_user = "femnad"
-
-  provider {
-    google = google
-  }
 }
 ```
 

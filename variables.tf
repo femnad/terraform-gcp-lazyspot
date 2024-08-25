@@ -94,15 +94,12 @@ variable "network_tier" {
 }
 
 variable "service_account" {
-  type        = string
+  type = object({
+    name   = string
+    scopes = optional(list(string), ["cloud-platform"])
+  })
   default     = null
   description = "Optional service account to associate with the instance"
-}
-
-variable "service_account_scopes" {
-  type        = list(string)
-  default     = ["cloud-platform"]
-  description = "List of service account scopes"
 }
 
 variable "ssh_user" {

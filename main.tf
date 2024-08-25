@@ -97,10 +97,11 @@ resource "google_compute_instance" "instance" {
   }
 
   dynamic "service_account" {
-    for_each = var.service_account == null ? [] : [1]
+    for_each = var.service_account == null ? [] : [
+    { email = var.service_account.name, scopes = var.service_account.scopes }]
     content {
-      email  = var.service_account
-      scopes = var.service_account_scopes
+      email  = service_account.value.email
+      scopes = service_account.value.scopes
     }
   }
 

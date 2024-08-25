@@ -64,6 +64,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_auto_create_subnetworks"></a> [auto\_create\_subnetworks](#input\_auto\_create\_subnetworks) | When creating a network, auto create subnetworks? | `bool` | `false` | no |
 | <a name="input_disk_size"></a> [disk\_size](#input\_disk\_size) | Root disk size in GiB | `number` | `10` | no |
 | <a name="input_disks"></a> [disks](#input\_disks) | List of disks to attach | <pre>list(object({<br>    source = string,<br>    name   = string,<br>  }))</pre> | `[]` | no |
 | <a name="input_dns"></a> [dns](#input\_dns) | DNS properties for the record to associate with the instance | <pre>object({<br>    name = string<br>    ttl  = optional(number)<br>    type = optional(string)<br>    zone = string<br>  })</pre> | `null` | no |
@@ -74,9 +75,10 @@ No modules.
 | <a name="input_max_run_seconds"></a> [max\_run\_seconds](#input\_max\_run\_seconds) | Maximum run duration in seconds | `number` | `86400` | no |
 | <a name="input_metadata"></a> [metadata](#input\_metadata) | A map of metadata values | `map(string)` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the instance | `string` | `null` | no |
-| <a name="input_network_tier"></a> [network\_tier](#input\_network\_tier) | Network tier for the instance | `string` | `"PREMIUM"` | no |
+| <a name="input_network"></a> [network](#input\_network) | Network name | `string` | `null` | no |
 | <a name="input_service_account"></a> [service\_account](#input\_service\_account) | Optional service account to associate with the instance | <pre>object({<br>    name   = string<br>    scopes = optional(list(string), ["cloud-platform"])<br>  })</pre> | `null` | no |
 | <a name="input_ssh_user"></a> [ssh\_user](#input\_ssh\_user) | A user name to set for authorized SSH keys, defaults to `github_user` | `string` | `""` | no |
+| <a name="input_subnets"></a> [subnets](#input\_subnets) | n/a | <pre>list(object({<br>    cidr = string<br>    name = optional(string)<br>    tier = optional(string, "PREMIUM")<br>    })<br>  )</pre> | <pre>[<br>  {<br>    "cidr": "10.1.0.0/24"<br>  }<br>]</pre> | no |
 
 ## Outputs
 

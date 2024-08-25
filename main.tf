@@ -22,6 +22,8 @@ locals {
   # Instance, network, subnetwork and firewall name.
   name = var.name == null ? random_pet.this[0].id : var.name
 
+  network_name = coalesce(var.network, google_compute_network.this[0].name)
+
   ssh_user        = coalesce(var.ssh_user, var.github_user)
   ssh_format_spec = format("%s:%%s %s@host", local.ssh_user, local.ssh_user)
   ssh_keys_metadata = join("\n", formatlist(local.ssh_format_spec, [
@@ -29,6 +31,15 @@ locals {
   ]))
   ssh_keys_metadata_map = {
     ssh-keys = local.ssh_keys_metadata
+  }
+
+  subnets = {
+    for subnet in var.subnets :
+    coalesce(subnet.name, subnet.cidr) => {
+      cidr = subnet.cidr
+      name = format("${local.name}-", replace(subnet.cidr, "/[./]/", "-"))
+      tier = subnet.tier
+    }
   }
 }
 
@@ -50,14 +61,16 @@ resource "random_pet" "this" {
 }
 
 resource "google_compute_network" "this" {
+  count                   = var.network == null ? 1 : 0
   name                    = local.name
-  auto_create_subnetworks = false
+  auto_create_subnetworks = var.auto_create_subnetworks
 }
 
 resource "google_compute_subnetwork" "this" {
-  name          = local.name
-  network       = google_compute_network.this.name
-  ip_cidr_range = "10.1.0.0/24"
+  for_each      = local.subnets
+  ip_cidr_range = each.value.cidr
+  name          = each.value.name
+  network       = local.network_name
 }
 
 resource "google_compute_instance" "this" {
@@ -67,10 +80,13 @@ resource "google_compute_instance" "this" {
 
   metadata = merge(local.ssh_keys_metadata_map, var.metadata)
 
-  network_interface {
-    subnetwork = google_compute_subnetwork.this.name
-    access_config {
-      network_tier = var.network_tier
+  dynamic "network_interface" {
+    for_each = google_compute_subnetwork.this
+    content {
+      subnetwork = network_interface.value.name
+      access_config {
+        network_tier = local.subnets[network_interface.key].tier
+      }
     }
   }
 
@@ -98,7 +114,8 @@ resource "google_compute_instance" "this" {
 
   dynamic "service_account" {
     for_each = var.service_account == null ? [] : [
-    { email = var.service_account.name, scopes = var.service_account.scopes }]
+      { email = var.service_account.name, scopes = var.service_account.scopes }
+    ]
     content {
       email  = service_account.value.email
       scopes = service_account.value.scopes
@@ -116,7 +133,7 @@ resource "google_compute_instance" "this" {
 
 resource "google_compute_firewall" "self" {
   name    = "${local.name}-self"
-  network = google_compute_network.this.name
+  network = local.network_name
   count   = var.firewall.self != null ? 1 : 0
 
   dynamic "allow" {
@@ -134,14 +151,14 @@ resource "google_compute_firewall" "self" {
 resource "google_compute_firewall" "other" {
   for_each = coalesce(var.firewall.other, {})
   name     = "${local.name}-${replace(each.key, "/[./]/", "-")}"
-  network  = google_compute_network.this.name
+  network  = local.network_name
 
   dynamic "allow" {
     for_each = each.value
 
     content {
       protocol = allow.key
-      ports    = allow.key == "icmp" ? [] : allow.value
+      ports    = allow.key == "icmp" ? null : allow.value
     }
   }
 
@@ -149,16 +166,15 @@ resource "google_compute_firewall" "other" {
 }
 
 resource "google_dns_record_set" "this" {
-  count = var.dns != null ? 1 : 0
-  name  = var.dns.name
-  type  = coalesce(var.dns.type, local.default_type)
-  ttl   = coalesce(var.dns.ttl, local.default_ttl)
-
+  count        = var.dns != null ? 1 : 0
+  name         = var.dns.name
   managed_zone = var.dns.zone
+  type         = coalesce(var.dns.type, local.default_type)
+  ttl          = coalesce(var.dns.ttl, local.default_ttl)
 
   rrdatas = flatten(
     [
-      for nic in google_compute_instance.instance.network_interface :
+      for nic in google_compute_instance.this.network_interface :
       [
         for cfg in nic.access_config :
         cfg.nat_ip

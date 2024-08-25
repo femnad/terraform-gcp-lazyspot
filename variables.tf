@@ -1,3 +1,9 @@
+variable "auto_create_subnetworks" {
+  type        = bool
+  default     = false
+  description = "When creating a network, auto create subnetworks?"
+}
+
 variable "disk_size" {
   type        = number
   default     = 10
@@ -87,10 +93,10 @@ variable "name" {
   description = "Name of the instance"
 }
 
-variable "network_tier" {
+variable "network" {
   type        = string
-  default     = "PREMIUM"
-  description = "Network tier for the instance"
+  default     = null
+  description = "Network name"
 }
 
 variable "service_account" {
@@ -106,4 +112,18 @@ variable "ssh_user" {
   type        = string
   default     = ""
   description = "A user name to set for authorized SSH keys, defaults to `github_user`"
+}
+
+variable "subnets" {
+  type = list(object({
+    cidr = string
+    name = optional(string)
+    tier = optional(string, "PREMIUM")
+    })
+  )
+  default = [
+    {
+      cidr = "10.1.0.0/24"
+    }
+  ]
 }
